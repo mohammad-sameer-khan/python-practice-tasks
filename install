@@ -1,0 +1,761 @@
+
+                   UNIX / Linux Installation Guide
+                   *******************************
+
+
+                Copyright 2019 Acquire Media Corporation
+                        All Rights Reserved
+
+
+Acquire Media Corporation provides this documentation without warranty of any
+kind, either express or implied, including, but not limited to, the implied
+warranties of merchantability and fitness for a particular purpose.
+
+AMPS, AMPS Lan, AMPS Net, AMX, COGENT and ENQUE are trademarks of Acquire Media
+Corporation. 
+
+Other brands and product names used in this manual may be registered trademarks
+or trademarks of their respective holders.
+
+=============================================================================
+
+Acquire Media Transmit (AMX) makes it easy to add customized, real-time, rich
+media content to your website. From hundreds of media sources, we bring
+today's top headlines, business, hi-tech, healthcare and entertainment news,
+financial data and stock quotes, weather maps, sporting news, scores, and more
+to your website.  (AMPS is a TCP based protocol used to deliver data over the
+Internet.)
+
+=============================================================================
+
+Customer Support
+
+If you have any problems with the software or documentation, please contact
+Acquire Media Support via telephone, fax or electronic mail as described below.
+
+Support Location	Telephone	Facsimile	Electronic Mail	
+Roseland, NJ		(973) 422-0800	(973) 422-0028	support@acquiremedia.com	
+
+1	Introduction
+
+This manual describes the installation procedure for the Acquire Media Transmit
+(AMX) product for UNIX and Linux systems.  It describes the preliminary steps
+necessary before you install the software.  It also describes the basic
+installation process. 
+
+Important: Please read through this entire manual before beginning the
+installation of the AMX software.
+
+2	Overview of Acquire Media AMX Package
+
+The AMX software consists of:
+	AMX Interceiver. This is a daemon (named intcvr) that maintains a
+connection between your system and the AMPS server at the Acquire Media
+location in Newark, NJ.  This connection is used to transmit news and other
+information to your system.
+	WNDP Server. This daemon (named wndp) caches the data (news) files
+created by the AMX Interceiver. It then provides a generic interface whereby
+one or more external programs (usually other daemons) can receive and process
+the news using the WNDP protocol
+	One or more applications that process the XMLNews stories and
+associated metadata files (RDF files)
+ 
+3	Installation Overview
+
+The AMX installation consists of a single tar archive containing all the
+necessary components required for a full installation. 
+
+The tar archive will have the following naming convention:
+
+On UNIX:
+amx#.#-solaris2.x-sparc.tar
+
+where:
+
+#.# - the release version of the software
+2.x - the solaris operating system release level
+sparc - processor type used
+
+On Linux:
+amx#.#-linux2.2.12-20.tar
+
+where:
+
+#.# - the release version of the software
+2.2.12-20 - the Linux kernel version
+
+Root access is required when running the installation program.  It is
+recommended that all installations be performed from a directory other than
+/tmp.  Information pertaining to both the new release being installed, as well
+as the prior release (when applicable) will be kept in sub-directories beneath
+the directory from which the installation is run.  If /tmp was used, and the
+system was rebooted, all this information would be lost. 
+
+3.1	Hardware Requirements
+
+Hardware Platform:  Linux 32-bit/64-bit
+
+Operating System:
+CentOS/Redhad 5/6/7
+
+Internet:  Machine should have a permanent connection to the Internet.
+Note: AMPS uses port 443 (SSL - Secure Socket Layer). This port must be
+open in your firewall.
+
+DNS: DNS Name Resolution must be fully operational in order for the machine
+to communicate back to the Acquire Media head-end.
+
+IMPORTANT LINUX NOTE:
+Make sure the slocate program is NOT configured to run.  It might be configured
+via the /etc/cron.daily/slocate.cron.  This program is the Security Enhanced
+version of the GNU Locate used to index new files as they are created into a
+local database.  The large number of files created by AMX may cause serious
+system degradation.  It is highly recommended that slocate NOT be run.
+
+3.2	Installation components
+
+The base level components of the tar archive are as follows:
+AMX-UNIX-Linux-Install.doc - This document.
+README - overview of installation package, licensing information, etc.
+install - AMX installation utility.
+amx#.#-solaris2.x-sparc.install.tar.bz2 - actual AMX archive in compressed form.
+bunzip2 - decompression utility used on all *.bz2 archives.
+CtrlFile - installation control file required by the install utility.
+optional#.#-solaris2.x-sparc.install.tar.bz2 - optional software archive in compressed form.
+
+Note: Under Linux, the .bz2 files will follow the naming convention outlined at the beginning of this section.
+
+The archive is intended to be installed from the directory in which it was
+unpacked.  Using a different directory will only work if all files have been
+moved or copied.
+
+3.3	Running the install script
+
+The install script is used to perform the actual installation of software
+components on your system.  This script requires root user permissions and
+does the following:
+
+Unpacks and creates a local installation tree for all software components in
+the chosen product.
+Sets correct permissions on all directories and files in the chosen release area.
+Saves a record of the installation in /var/adm/amx/log/installation.log.
+Please refer to the UNIX/Linux AdministratorÆs Guide for a detailed
+description of the /var/adm/amx directory tree.
+Displays information summarizing the products that have been installed.
+Restores prior release (use if installation was unsuccessful).
+Removes temporary installation files and the backup of the prior release
+(use if installation was successful).
+
+Usage: install [product [-rollback|-clean]|-info]
+
+        -info          - Summarizes which products are installed
+        -rollback      - Restores prior release
+        -clean         - Removes temporary installation files and backup
+                         of prior release
+
+4	Pre-installation data table
+
+The following information will be required before proceeding with the
+installation.  Please fill in all required information in the last column of
+the following table before starting:
+
+DNS	required
+----------------
+DNS Name Resolution is required for the AMX Interceiver to communicate back to
+the Acquire Media head-end.  If DNS is not operational, installation can still
+take place.  If you choose to start the release after installation, the AMX
+Interceiver will try forever to connect to the Acquire Media head-end until
+DNS is operational.  No content will be received until DNS is restored.
+
+
+UNIX/Linux user account	required
+--------------------------------
+For the initial installation, a valid administration account must be designated
+under which all AMX processes will be run. Typically, an administration
+account, such as nadmin, amxadmin etc. is used.  Do not attempt to give this
+account root privileges (UID of 0) as this will render the AMX system
+inoperable.  You may want to contact your system administrator.
+
+Installation directory	required  (for initial installation only)
+-----------------------------------------------------------------
+A valid directory into which the software is to be installed. Please refer to
+the Hardware Requirements outlined above for disk space requirements.  The
+installation will fail if there is not sufficient space.
+
+
+dedicated mail server	optional
+--------------------------------
+A local mail server can be specified for outgoing  email notification of the
+status of the AMX Interceiver and the WNDP Server.
+
+
+email account(s)	optional
+--------------------------------
+The AMX software can be configured to automatically generate an email message
+under certain conditions.  There are typically three conditions that warrant
+an automatic email notification:
+1. daily status notification to monitor system health.
+2. fatal condition encountered - one or more processes are down.
+3. new software release has been dynamically received and should be
+installed at the earliest possible convenience. Up to 10 email address can
+be specified to receive each of these notification types.
+    1. daily status
+    2. fatal condition
+    3. new software
+
+
+AMX account info: 1. Username 2. Password 3. Account number	required
+------------------------------------------------------------------------
+The username, password and account number were given to you by customer
+support or the Acquire Media website.
+
+
+Proxy information 1. server 2. port number	optional
+--------------------------------------------------------
+If your site configuration is using a proxy server, you must enter this
+information so that AMX can communicate back to the AMPS head end.
+
+
+AmxViewer installation directory	optional
+------------------------------------------------
+AmxViewer is a utility for displaying real-time information as it is being
+received. It is intended to be used as part of an administrator's console to
+verify that news is flowing over the Internet from the Acquire Media AMPS
+head-end to the server on which the AMX Interceiver is installed. This
+application can be install remotely if desired.
+
+
+5	Installing AMX
+
+Some components of AMX (e.g., the Interceiver) are required and others
+(e.g., the AMX File Archiver) are optional.  In either case three steps
+should be performed to insure a successful installation:
+Run the install script
+Verify that installed program(s) run
+Delete temporary and backup files
+
+We now outline these three steps for each AMX component.
+5.1	Required components
+
+When installing the required components of AMX, a symbolic link called /nwsys
+will be created to point to the user-chosen installation directory.  This
+link must exist in order for AMX to function properly and should never be
+deleted or modified.
+
+The following procedure unpacks and installs the required components of AMX.
+It is assumed that the AMX tar archive has already been downloaded to your
+server and the installation is being run under the root (superuser) account.
+
+Verify DNS Name Resolution is operational.  (It is important to note that
+Acquire Media Corporation reserves the right to change the existing IP
+address of this server in the future.)
+
+# nslookup amps.acquiremedia.com
+Server:  dns.server.com
+Address:  x.x.x.x
+
+Non-authoritative answer:
+Name:    amps.acquiremedia.com
+Address:  63.236.87.111
+
+Note: Sometimes the above command is successful even when DNS is not fully
+configured.  In such a case, it is usually the /etc/nsswitch.conf file which
+is incorrect.
+
+For Linux: /bin/ping amps.acquiremedia.com
+Confirm you don't get the message: unknown host amps.acquiremedia.com.  It's
+okay if the ping times out with no answer from amps.acquiremedia.com. If DNS
+is not configured properly, the ping will immediately return with the unknown
+host error.
+
+Verify archive exists.
+
+On Linux:
+# ls amx*
+amx1.7-linux2.2.12-20.tar
+
+Verify architecture and OS version match that of the AMX tar archive via the
+uname command.
+
+On Linux:
+# uname -r
+2.2.12-20smp
+
+(Note:  The trailing smp may or may not appear.)
+
+Unpack the tar achive.  This can be done in any directory on the server.
+
+
+Note: The AMX version number and corresponding block sizes of the files within
+the archive do not necessarily match this document.
+
+On Linux:
+
+# tar xvf amx1.7-linux2.2.12-20.tar
+./amx1.7-linux2.2.12-20.install.tar.bz2 
+./bunzip2 
+CtrlFile 
+AMX-UNIX-Linux-Install.doc
+README 
+filearch1.7-linux2.2.12-20.install.tar.bz2
+indexer1.7-linux2.2.12-20.install.tar.bz2
+install
+amxviewer1.7-linux2.2.12-20.install.tar.bz2
+scroller1.7-linux2.2.12-20.install.tar.bz2
+website1.7-linux2.2.12-20.install.tar.bz2
+
+Run the installation utility to unpack, decompress and install the software archive.  (Note:  In the following examples, the /pool directory was chosen for illustration purposes only.  There is no requirement that this directory exist in order to perform the installation. Also, if this is not the first AMX component being installed on the server, you will not be prompted for a valid user account to be the owner of the software about to be installed.)
+
+# ./install amx
+
+
+	* * * * * * * * * * * * * * * * * * * * * * * * * * *
+	*                                                   *
+	*        Acquire Media Installation Utility         *
+	*        ==================================         *
+	*                                                   *
+	*    copyright (C) 2019 Acquire Media Corporation   *
+	*                                                   *
+	* * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Would you like to view the README file? (y/n) n
+
+            *****************************************
+            *** First time installation detected. ***
+            *****************************************
+
+You must choose a valid user account to be the owner of the software
+which is about to be installed.  Typically, an administration
+account, such as nadmin, amxadmin etc. is used.  If at this time
+there is no account to use, please create one, or contact your system
+administrator.  (Control-C to exit and try again later)
+
+Please enter valid user account now: nadmin
+You have entered: 'nadmin' Is this correct? (y/n) y
+
+You must choose a valid directory where the software will be installed.
+The directory MUST reside locally on this server (i.e. not NFS mounted
+from any other server).  Please consult the installation guide for disk
+space requirements.  INSTALLATION WILL FAIL WITHOUT SUFFICIENT SPACE.
+
+Please enter installation directory: /pool/amx
+You have entered: '/pool/amx' Is this correct? (y/n) y
+'/pool/amx' does not exist
+Do you want to create /pool/amx? (y/n) y
+Creating /pool/amx
+Creating /pool/amx/nwsys
+Creating symbolic link from /pool/amx/nwsys to /nwsys
+Creating /nwsys/tmp
+Creating /nwsys/tmp/xfer
+Creating /pool/install/amx1.7
+
+Beginning software installation for AMX
+
+Cleaning installation work area...
+Creating /pool/install/amx1.7/upgrade
+Uncompressing amx1.7-solaris2.6-sparc.install.tar.bz2
+Unpacking archive amx1.7-solaris2.6-sparc.install.tar
+Cleaning rollback area...
+Creating /pool/install/amx1.7/rollback
+Performing installation - Wed Jul 19 13:27:45 EDT 2000
+Creating /nwsys/release/bin
+Creating /pool/install/amx1.7/rollback/bin
+Creating /nwsys/release/conf
+Creating /pool/install/amx1.7/rollback/conf
+Creating /nwsys/release/conf/skel
+Creating /pool/install/amx1.7/rollback/conf/skel
+Creating /nwsys/release/docs
+Creating /pool/install/amx1.7/rollback/docs
+Creating /nwsys/release/etc
+Creating /pool/install/amx1.7/rollback/etc
+
+Proceeding with installation.
+
+SUCCESS: File installation complete
+
+Running '/pool/install/amx1.7/upgrade/bin/chkhost '
+Local cfg OK: Server = server_name IP Addr = ip_address
+ 
+Running '/pool/install/amx1.7/upgrade/mxp_init '
+
+Running '/pool/install/amx1.7/upgrade/setup_global_cfg -amx'
+Group is set to 'wlabs'
+Checking server run area
+Creating /nwsys/release/conf/system
+Creating /nwsys/release/api
+Creating /nwsys/release/aos
+Creating /nwsys/release/logs
+Installing new /usr/wlabs/wlabscmd
+
+Running '/pool/install/amx1.7/upgrade/setup_email_cfg '
+
+The software about to be installed can be configured to automatically
+generate an email message under certain conditions.  There are typically
+three conditions that warrant an automatic email notification:
+    1. daily status notification to monitor system health.
+    2. fatal condition encountered - one or more processes are down.
+    3. new software release has been dynamically received and
+       should be installed at the earliest possible convenience.
+Up to 10 email addresses can be specified to receive each of these messages.
+You will be prompted to enter the appropriate information if you want
+to configure this option.
+
+Do you want to configure email notification? (y/n) y
+            
+The following prompt for domain name will not be seen on your system if the domain name can be determined automatically:
+Please enter the current domain name: my.domain.com
+You have entered: my.domain.com' Is this correct? (y/n) y
+
+Basic email configuration file has been installed
+
+Running '/pool/install/amx1.7/upgrade/setup_mxp_boot -update'
+Installing /etc/init.d/amx.init
+
+Installing shutdown link /etc/rc0.d/K90amx
+Installing startup link /etc/rc3.d/S90amx
+
+
+Running '/pool/install/amx1.7/upgrade/setup_mxp_cfg '
+
+It is recommended that a local mail server be entered
+at this time.  If a mail server is not available, the
+sendmail process from this server is used for all outgoing
+mail.  If this server is not configured for sendmail, then
+all outgoing email notification will NOT be possble.
+
+Do you want to specify a mail server for email notification:? (y/n) y
+
+Please enter the local mail server: mailserver@abc.com
+You have entered: 'mailserver@abc.com' Is this correct? (y/n) y
+
+Configuring email notification triggers:
+When more than one email address is being entered, please separate
+them with semicolons (e.g. user1@abc.com;user2@abc.com etc.)
+
+Please enter email address(es) for daily notification message: user@abc.com
+You have entered: 'user@abc.com' Is this correct? (y/n) y
+
+Please enter email address(es) for fatal condition message: user@abc.com
+You have entered: 'user@abc.com' Is this correct? (y/n) y
+
+Please enter email address(es) new software release message: user@abc.com
+You have entered: 'user@abc.com' Is this correct? (y/n) y
+Email notification triggers have been installed
+
+System (process) configuration file has been installed
+
+This server does not have a valid AMX configuration file.
+You will be prompted for the necessary information to create this file.
+You will need the following information before proceeding:
+
+    1. AMX Username (supplied with installation package)
+    2. AMX Password (supplied with installation package)
+    3. AMX Account Number (supplied with installation package)
+    4. Proxy information if applicable
+        a. proxy name or IP address
+        b. proxy port number (default is 8080)
+
+
+Please enter AMX user name: AMXUSER		(obtained from AMC)
+You have entered: 'AMXUSER' Is this correct? (y/n) y
+
+Please enter AMX password: AMX_passwd		(obtained from AMC)
+You have entered: 'AMX_passwd' Is this correct? (y/n) y
+
+Please enter AMX account number: 6512345		(obtained from AMC)
+You have entered: '123456' Is this correct? (y/n) y
+
+********************************************************* 
+PLEASE NOTE THAT USERNAME AND PASSWORD ARE CASE SENSITIVE 
+********************************************************* 
+The following information has been entered: 
+    AMX Username:               AMXUSER
+    AMX Password:               AMXpasswd
+    AMX account number:         6512345
+Are all of these items correct? (y/n) y
+
+Is a proxy going to be used? (y/n) n
+System (communication) configuration files have been installed
+
+Running '/pool/install/amx1.7/upgrade/setup_registry_bin '
+Installing amxopt in /var/adm/amx/bin
+Installing mxp.profile in /var/adm/amx/bin
+Installing mxp.cshrc in /var/adm/amx/bin
+
+Running '/pool/install/amx1.7/upgrade/setup_registry_cfg '
+
+Stock Delimeter specifies the character that should be used to separate
+the company ticker symbol from its stock exchange symbol in the
+companyCode field in the xml-news.meta file. Files arrive with : as the
+delimiter. This substitution should be performed only if downstream
+applications (e.g., Microsoft Indexer) cannot handle the : delimiter.
+
+Would you like to change the stock exchange/ticker symbol delimiter? (y/n) n
+
+Default delimiter of ':' will be used.
+
+
+Since this is the first installation of AMX you have
+the option to avoid starting the system at this point in time.
+If you choose this option now you can start the system later
+by using the appropriate startup utilities.  Please consult
+the AMX Administrators Guide for instructions.
+
+Would you like to start AMX now? (y/n) y
+Running '/nwsys/release/bin/amxstart -force'
+Logging process nlogd is currently not running
+    Starting nlogd ... done
+    Starting wndp ... done
+    Starting emaild ... done
+    Starting intcvr ... done
+
+installation for AMX is now complete.
+Once this installation has been verified as specified in the
+Installation Guide, please run ./install amx -clean
+
+=============================================================
+    For a record of this installation, please refer to:
+    /var/adm/amx/log/installation.log
+-------------------------------------------------------------
+
+Verify installation using the account specified during the install.  (Note: In the following example, the path variable for nadmin was modified to contain /nwsys/release/bin via the mxp.profile startup information - steps 6a and b.)
+
+# su - nadmin   (change from user root to user nadmin)
+
+Sun Microsystems Inc.	SunOS 5.7	Generic	October 1998	(Solaris only)
+
+6a.  Add one of the following lines to your startup file (.cshrc, .bashrc etc):
+source /var/adm/amx/bin/mxp.cshrc 		(for csh, tcsh)
+. /var/adm/amx/bin/mxp.profile 		(for bash)
+
+6b.  Update your environment with new settings:
+{nadmin} > source your_startup_file
+
+{nadmin} > amxstatus   (verify all processes are up and running)
+
+Release: 1.7
+
+    nlogd         running           3125 
+
+    wndp          running           3176 
+    emaild        running           3133 
+
+    intcvr        running           3145 3148 
+                                    NZ:UP 
+
+    **** All processes are up and running ****
+
+{nadmin} > windiag -n 2   (check Interceiver to verify byte counts in data section growing)
+
+Connection:
+	State:                                            Online
+	Runtime:                                      0h  2m 35s
+	* Reconnects Today:                                    0
+	Reconnects (0 day avg):                              n/a
+	Last Disconnect GMT:                                 n/a
+	Last Outage Duration:                         0h  0m  0s
+	* Total Outage Today:                         0h  0m  0s
+	* Average Outage Today:                              n/a
+	Last Ping Time GMT:                                  n/a
+	Last Ping Delay (ms):                                  0
+	Avg Ping Delay (ms):                                   0
+	* Max Ping Delay Today (ms):                           0
+	Missed Sequences:                                      0
+
+Data:
+	* Bytes Recieved Today:                          1148317
+	* Bytes Sent Today:                                 3443
+	* Packets Received Today:                           1343
+	* Packets Sent Today:                                172
+	Received Bytes per Sec (0 day avg):                    0
+	Sent Bytes per Sec (0 day avg):                        0
+	Last Data Interval:                           0h  0m  0s
+	Last Data Received GMT:              05-May-00  16:22:04
+	* Max Data Interval Today:                    0h  0m  8s
+	ReXmits from Server:                                   0
+	ReXmits to Server:                                     0
+
+Connection:
+	State:                                            Online
+	Runtime:                                      0h  2m 45s
+	* Reconnects Today:                                    0
+	Reconnects (0 day avg):                              n/a
+	Last Disconnect GMT:                                 n/a
+	Last Outage Duration:                         0h  0m  0s
+	* Total Outage Today:                         0h  0m  0s
+	* Average Outage Today:                              n/a
+	Last Ping Time GMT:                                  n/a
+	Last Ping Delay (ms):                                  0
+	Avg Ping Delay (ms):                                   0
+	* Max Ping Delay Today (ms):                           0
+	Missed Sequences:                                      0
+
+Data:
+	* Bytes Recieved Today:                          1214403
+	* Bytes Sent Today:                                 3683
+	* Packets Received Today:                           1439
+	* Packets Sent Today:                                184
+	Received Bytes per Sec (0 day avg):                    0
+	Sent Bytes per Sec (0 day avg):                        0
+	Last Data Interval:                           0h  0m  0s
+	Last Data Received GMT:              05-May-00  16:22:14
+	* Max Data Interval Today:                    0h  0m  8s
+	ReXmits from Server:                                   0
+	ReXmits to Server:                                     0
+
+
+{nadmin} > exit   (become root again)
+Remove temporary files.  (Note: if you are not currently in the same directory that you started in, please return to there now.)
+
+# ./install amx -clean
+
+
+	* * * * * * * * * * * * * * * * * * * * * * * * * * *
+	*                                                   *
+	*        Acquire Media Installation Utility         *
+	*        ==================================         *
+	*                                                   *
+	*    copyright (C) 2002 Acquire Media Corporation   *
+	*                                                   *
+	* * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Are you sure you want to remove temporary files for AMX? (y/n) y
+Cleaning amx
+Installation files for AMX (release 1.7) have been removed.
+#
+
+
+
+
+5.2	Optional components
+Optional software components do not have to be installed on the same server as AMX. When choosing to install optional software remotely, the install utility, CtrlFile and optional#.#àbz2 must be placed in the same directory on the remote server for proper installation.
+5.2.1	Amx Viewer
+
+Run the installation utility to unpack, decompress and install the Amx Viewer component archive.  Note: If News View is the first AMX component being installed on the server, you will be prompted for a valid user account to be the owner of the software about to be installed.
+
+# ./install amxviewer
+
+
+	* * * * * * * * * * * * * * * * * * * * * * * * * * *
+	*                                                   *
+	*        Acquire Media Installation Utility         *
+	*        ==================================         *
+	*                                                   *
+	*    copyright (C) 2002 Acquire Media Corporation   *
+	*                                                   *
+	* * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+
+Would you like to view the README file? (y/n) n
+
+            *****************************************
+            *** First time installation detected. ***
+            *****************************************
+
+
+You must choose a valid directory where the software will be installed.
+The directory MUST reside locally on this server (i.e. not NFS mounted
+from any other server).  Please consult the installation guide for disk
+space requirements.  INSTALLATION WILL FAIL WITHOUT SUFFICIENT SPACE.
+
+Please enter installation directory: [def: /pool/amx] <Enter>
+You have entered: '/pool/amx' Is this correct? (y/n) y
+Creating /pool/amx/tmp
+Creating /pool/amx/tmp/xfer
+Creating /pool/install/amxviewer1.7
+
+Beginning software installation for AmxViewer
+
+Cleaning installation work area...
+Creating /pool/install/amxviewer1.7/upgrade
+Uncompressing amxviewer1.7-solaris2.6-sparc.install.tar.bz2
+Unpacking archive amxviewer1.7-solaris2.6-sparc.install.tar
+Cleaning rollback area...
+Creating /pool/install/amxviewer1.7/rollback
+Performing installation - Fri May  5 12:29:19 EDT 2000
+Creating /pool/amx/programs
+Creating /pool/install/amxviewer1.7/rollback/programs
+Creating /pool/amx/programs/cfg
+Creating /pool/install/amxviewer1.7/rollback/programs/cfg
+Creating /pool/amx/source
+Creating /pool/install/amxviewer1.7/rollback/source
+Creating /pool/amx/source/src
+Creating /pool/install/amxviewer1.7/rollback/source/src
+Creating /pool/amx/source/include
+Creating /pool/install/amxviewer1.7/rollback/source/include
+Creating /pool/amx/source/lib
+Creating /pool/install/amxviewer1.7/rollback/source/lib
+Creating /pool/amx/source/bin
+Creating /pool/install/amxviewer1.7/rollback/source/bin
+
+Proceeding with installation.
+
+SUCCESS: File installation complete
+
+Running '/pool/install/amxviewer1.Xm/upgrade/amxviewer_init '
+AmxViewer system initialization complete.
+
+
+installation for amxviewer is now complete.
+Once this installation has been verified as specified in the
+Installation Guide, please run ./install amxviewer -clean
+
+=============================================================
+    For a record of this installation, please refer to:
+    /var/adm/amx/log/installation.log
+-------------------------------------------------------------
+
+Verify installation of AmxViewer component.  (Note: In the following example, the path variable for nadmin was modified to contain /var/adm/amx/bin via the mxp.profile startup information - steps 2a and b.)
+
+# su - nadmin   (change from user root to user nadmin)
+Sun Microsystems Inc.	SunOS 5.7	Generic	October 1998	(Solaris only)
+
+Steps 2a and 2b are only necessary if the AmxViewer component is being installed on a server other than the required AMX component.
+2a.  Add one of the following line to your startup file (.cshrc, .bashrc etc):
+source /var/adm/amx/bin/mxp.cshrc		(csh, tcsh)
+. /var/adm/amx/bin/mxp.profile		(bash)
+
+2b.  Update your environment with new settings:
+{nadmin} > source your_startup_file
+
+{nadmin} > /pool/amx/programs/amxviewer   (check incoming news content)
+12:30  COMTEX__  USDA opening livestock market summary-May 4
+12:30  COMTEX__  Iraq Accuses U.S. of Holding Oil-Sector Related Applications
+12:30  COMTEX__  ExxonMobil and Agip Announce Venture in Gulf of Mexico
+12:30  COMTEX__  Baseball: Las Vegas Major League Baseball Line
+12:30  COMTEX__  Petroglyph Energy, Inc. Receives Proposal for Acquisition of
+12:30  COMTEX__  American Life League: Florida Partial Birth Abortion Ban pas
+12:30  COMTEX__  IDB Finances Power Project in Panama
+12:30  COMTEX__  Boulder, Colo., Companies Offer Family-Friendly Amenities to
+12:30  COMTEX__  S. Leone Former Rebel Leader Orders to Free UN Hostages
+12:30  COMTEX__  National Abortion Federation Targets Christian Teens and Roc
+12:30  COMTEX__  All American Announces First Quarter Results; Record-Breakin
+12:30  COMTEX__  Minnesota Wild Signs First Player
+12:30  COMTEX__  Baseball: Update - PIRATES 0, CARDINALS 1 Bottom - third inn
+12:30  COMTEX__  Boulder, Colo., Companies Offer Family-Friendly Amenities to
+^C    (to stop the amxviewer program use <CTRL-C>)
+{nadmin} > exit   (become root again)
+
+Remove temporary files. (Note: if you are not currently in the same directory that you started in, please return to there now.)
+
+# ./install amxviewer -clean
+
+
+
+	* * * * * * * * * * * * * * * * * * * * * * * * * * *
+	*                                                   *
+	*        Acquire Media Installation Utility         *
+	*        ==================================         *
+	*                                                   *
+	*    copyright (C) 2002 Acquire Media Corporation   *
+	*                                                   *
+	* * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+
+Are you sure you want to remove temporary files for AmxViewer? (y/n) y
+Cleaning amxviewer
+Installation files for AmxViewer (release 1.7) have been removed.
+
